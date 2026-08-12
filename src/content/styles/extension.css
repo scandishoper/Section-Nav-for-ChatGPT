@@ -1,0 +1,400 @@
+:host {
+  color-scheme: light dark;
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ext-page-text: CanvasText;
+  --ext-page-background: Canvas;
+  --ext-text-primary: var(--ext-page-text);
+  --ext-text-secondary: color-mix(in srgb, var(--ext-page-text) 52%, transparent);
+  --ext-marker: color-mix(in srgb, var(--ext-page-text) 30%, transparent);
+  --ext-hover: color-mix(in srgb, var(--ext-page-text) 7%, transparent);
+  --ext-focus: color-mix(in srgb, var(--ext-page-text) 35%, transparent);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.section-rail {
+  position: fixed;
+  top: 80px;
+  bottom: 120px;
+  z-index: 2147483000;
+  color: var(--ext-text-secondary);
+  pointer-events: auto;
+  transition: color 160ms ease, left 160ms ease, width 160ms ease;
+}
+
+.section-rail-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 9px 18px;
+  color: var(--ext-text-secondary);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.72;
+}
+
+.bookmark-drawer-trigger,
+.section-bookmark-toggle,
+.bookmark-drawer-close,
+.bookmark-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bookmark-drawer-trigger {
+  gap: 3px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.bookmark-drawer-trigger:hover,
+.bookmark-drawer-trigger:focus-visible {
+  background: var(--ext-hover);
+  color: var(--ext-text-primary);
+}
+
+.section-rail-list {
+  max-height: 100%;
+  margin: 0;
+  padding: 0 3px 0 0;
+  overflow-y: auto;
+  scrollbar-color: color-mix(in srgb, CanvasText 14%, transparent) transparent;
+  scrollbar-width: thin;
+  list-style: none;
+}
+
+.section-rail-list-item {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.section-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 30px;
+  padding-block: 5px;
+  padding-inline-start: calc(var(--section-depth, 0) * 10px);
+  padding-inline-end: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  opacity: 0.72;
+  transition: color 140ms ease, opacity 140ms ease, background-color 140ms ease;
+}
+
+.section-bookmark-toggle {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  color: var(--ext-text-secondary);
+  font-size: 11px;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: color 140ms ease, opacity 140ms ease, background-color 140ms ease;
+}
+
+.section-rail-list-item:hover .section-bookmark-toggle,
+.section-rail-list-item:focus-within .section-bookmark-toggle,
+.section-bookmark-toggle.is-bookmarked {
+  opacity: 1;
+}
+
+.section-bookmark-toggle:hover,
+.section-bookmark-toggle:focus-visible,
+.section-bookmark-toggle.is-bookmarked {
+  color: var(--ext-text-primary);
+}
+
+.section-bookmark-toggle:hover,
+.section-bookmark-toggle:focus-visible {
+  background: var(--ext-hover);
+}
+
+.section-rail-item:hover {
+  background: var(--ext-hover);
+  color: var(--ext-text-primary);
+  opacity: 0.9;
+}
+
+.section-rail-item:focus-visible {
+  outline: 1px solid var(--ext-focus);
+  outline-offset: 1px;
+}
+
+.section-rail-item.is-active {
+  color: var(--ext-text-primary);
+  font-weight: 500;
+  opacity: 1;
+}
+
+.section-rail-marker {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 1px;
+  border-radius: 999px;
+  background: var(--ext-marker);
+  transition: width 140ms ease, height 140ms ease, background-color 140ms ease;
+}
+
+.section-rail-item.is-active .section-rail-marker {
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+}
+
+.section-rail-text {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section-rail-empty {
+  margin-left: 18px;
+  font-size: 10px;
+  line-height: 1.4;
+  opacity: 0.55;
+}
+
+.section-rail.is-compact .section-rail-heading {
+  margin-left: 15px;
+}
+
+.section-rail.is-compact .section-rail-item {
+  gap: 5px;
+  min-height: 28px;
+  padding-inline-start: calc(var(--section-depth, 0) * 7px);
+}
+
+.section-rail.is-compact .section-rail-text {
+  font-size: 10px;
+}
+
+.section-rail.is-mini .section-rail-heading,
+.section-rail.is-mini .section-rail-heading-text,
+.section-rail.is-mini .section-rail-text,
+.section-rail.is-mini .section-rail-empty {
+  display: none;
+}
+
+.section-rail.is-mini .section-rail-heading {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 6px;
+}
+
+.section-rail.is-mini .section-rail-list {
+  padding: 0;
+}
+
+.section-rail.is-mini .section-rail-item {
+  justify-content: center;
+  min-height: 22px;
+  padding: 4px 0;
+  border-radius: 4px;
+}
+
+.section-rail.is-mini .section-bookmark-toggle {
+  display: none;
+}
+
+.section-rail.is-mini .section-rail-marker {
+  width: 11px;
+}
+
+.section-rail.is-mini .section-rail-item.is-active .section-rail-marker {
+  width: 7px;
+  height: 7px;
+}
+
+.bookmark-drawer {
+  position: fixed;
+  top: 80px;
+  z-index: 2147483001;
+  width: 300px;
+  max-height: min(560px, calc(100vh - 200px));
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ext-page-text) 13%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ext-page-background) 96%, transparent);
+  box-shadow: 0 14px 40px color-mix(in srgb, var(--ext-page-text) 14%, transparent);
+  color: var(--ext-text-primary);
+  backdrop-filter: blur(16px);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.bookmark-drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 14px 11px;
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 9%, transparent);
+}
+
+.bookmark-drawer-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.bookmark-drawer-subtitle {
+  margin-top: 2px;
+  color: var(--ext-text-secondary);
+  font-size: 10px;
+}
+
+.bookmark-drawer-close {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.bookmark-drawer-close:hover,
+.bookmark-drawer-close:focus-visible,
+.bookmark-delete:hover,
+.bookmark-delete:focus-visible {
+  background: var(--ext-hover);
+}
+
+.bookmark-drawer-empty {
+  padding: 28px 14px;
+  color: var(--ext-text-secondary);
+  font-size: 11px;
+  text-align: center;
+}
+
+.bookmark-list {
+  max-height: calc(min(560px, 100vh - 200px) - 62px);
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  scrollbar-color: color-mix(in srgb, CanvasText 14%, transparent) transparent;
+  scrollbar-width: thin;
+  list-style: none;
+}
+
+.bookmark-list-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.bookmark-list-item:hover {
+  background: var(--ext-hover);
+}
+
+.bookmark-jump {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+  flex: 1;
+  padding: 9px 34px 9px 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.bookmark-star {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  font-size: 11px;
+}
+
+.bookmark-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.bookmark-title {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bookmark-meta {
+  color: var(--ext-text-secondary);
+  font-size: 9px;
+}
+
+.bookmark-meta.is-unresolved {
+  font-style: italic;
+}
+
+.bookmark-delete {
+  position: absolute;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  color: var(--ext-text-secondary);
+  font-size: 15px;
+  opacity: 0;
+}
+
+.bookmark-list-item:hover .bookmark-delete,
+.bookmark-list-item:focus-within .bookmark-delete {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-rail-item,
+  .section-rail-marker,
+  .section-rail {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .section-rail-item:focus-visible,
+  .bookmark-drawer-trigger:focus-visible,
+  .section-bookmark-toggle:focus-visible,
+  .bookmark-jump:focus-visible,
+  .bookmark-delete:focus-visible,
+  .bookmark-drawer-close:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 1px;
+  }
+
+  .section-rail-marker,
+  .section-rail-item.is-active .section-rail-marker {
+    background: ButtonText;
+  }
+
+  .bookmark-drawer {
+    border-color: ButtonText;
+    background: Canvas;
+  }
+}

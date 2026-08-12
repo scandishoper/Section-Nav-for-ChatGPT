@@ -1,0 +1,30 @@
+{
+  "name": "chatgpt-section-nav",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch --mode development",
+    "dev:firefox": "vite build --watch --mode firefox",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run build:edge",
+    "build:edge": "npm run typecheck && vite build",
+    "build:firefox": "npm run typecheck && vite build --mode firefox"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.6",
+    "@types/node": "^24.10.13",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "6.0.5",
+    "typescript": "7.0.2",
+    "vite": "8.2.1"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

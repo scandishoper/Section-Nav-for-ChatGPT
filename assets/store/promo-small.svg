@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 280" role="img" aria-labelledby="title description">
+  <title id="title">Section Nav for ChatGPT promotional tile</title>
+  <description id="description">A compact promotional tile showing section navigation and local bookmarks.</description>
+  <defs>
+    <linearGradient id="bg" x1="24" y1="18" x2="416" y2="262" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8F6EF" />
+      <stop offset="1" stop-color="#E8EEE9" />
+    </linearGradient>
+    <linearGradient id="iconBg" x1="52" y1="58" x2="172" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#293C34" />
+      <stop offset="1" stop-color="#121A17" />
+    </linearGradient>
+  </defs>
+  <rect width="440" height="280" rx="24" fill="url(#bg)" />
+  <rect x="30" y="54" width="142" height="142" rx="38" fill="url(#iconBg)" />
+  <path d="M72 84V166" stroke="#B9C5BE" stroke-opacity="0.42" stroke-width="5" stroke-linecap="round" />
+  <rect x="87" y="89" width="43" height="6" rx="3" fill="#F6F3E9" fill-opacity="0.7" />
+  <rect x="87" y="119" width="62" height="7" rx="3.5" fill="#F6F3E9" />
+  <rect x="87" y="151" width="50" height="6" rx="3" fill="#F6F3E9" fill-opacity="0.65" />
+  <circle cx="72" cy="122.5" r="9" fill="#F6F3E9" />
+  <path d="M146 77L150 86L160 87L153 94L155 104L146 99L137 104L139 94L132 87L142 86L146 77Z" fill="#D8A94A" />
+  <text x="196" y="92" fill="#17201C" font-family="Arial, sans-serif" font-size="24" font-weight="700">Section Nav</text>
+  <text x="196" y="119" fill="#17201C" font-family="Arial, sans-serif" font-size="16" font-weight="500">for ChatGPT</text>
+  <text x="196" y="157" fill="#52615A" font-family="Arial, sans-serif" font-size="12">Answer sections.</text>
+  <text x="196" y="176" fill="#52615A" font-family="Arial, sans-serif" font-size="12">Local bookmarks.</text>
+  <text x="196" y="195" fill="#52615A" font-family="Arial, sans-serif" font-size="12">No cloud sync.</text>
+  <rect x="30" y="225" width="380" height="1" fill="#17201C" fill-opacity="0.1" />
+  <text x="30" y="251" fill="#66736D" font-family="Arial, sans-serif" font-size="10">Independent extension · Data stays in your browser</text>
+</svg>

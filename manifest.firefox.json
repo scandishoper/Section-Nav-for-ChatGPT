@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Section Nav for ChatGPT",
+  "description": "Navigate headings in the current ChatGPT answer and save local section bookmarks.",
+  "version": "1.0.0",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "section-nav-for-chatgpt@scandi.local",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}
