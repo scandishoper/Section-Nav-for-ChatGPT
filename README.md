@@ -118,3 +118,7 @@ Bookmarks are stored under `chatgptSectionNav.bookmarks.v1` in `chrome.storage.l
 - The extension currently matches only `https://chatgpt.com/*`.
 
 If ChatGPT changes its DOM, `src/content/chatgptAdapter.ts` is the primary compatibility layer to update.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). Copyright (c) 2026 scandishoper.
