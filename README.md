@@ -1,5 +1,7 @@
 # Section Nav for ChatGPT
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 A Manifest V3 extension for Microsoft Edge and Chrome that adds lightweight heading navigation and local section bookmarks to the active ChatGPT answer.
 
 ## Installation
