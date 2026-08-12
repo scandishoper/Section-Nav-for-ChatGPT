@@ -6,6 +6,12 @@ A Manifest V3 extension for Microsoft Edge and Chrome that adds lightweight head
 
 ## Installation
 
+### Microsoft Edge Add-ons
+
+Microsoft Edge users can install the extension directly from [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/section-nav-for-chatgpt/ibcdhgbcipkecehpaogbhfhacnaaafdd).
+
+### Build from source
+
 Requirements:
 
 - Node.js 22.12 or newer

@@ -4,7 +4,13 @@
 
 一个适用于 Microsoft Edge、Google Chrome 和 Firefox 的 Manifest V3 浏览器扩展，为当前阅读的 ChatGPT 回答提供轻量级标题导航和本地章节书签。
 
-## 安装依赖
+## 安装
+
+### Microsoft Edge 扩展商店
+
+Microsoft Edge 用户可以直接前往 [Microsoft Edge 扩展商店](https://microsoftedge.microsoft.com/addons/detail/section-nav-for-chatgpt/ibcdhgbcipkecehpaogbhfhacnaaafdd) 安装本扩展。
+
+### 从源码构建
 
 环境要求：
 
