@@ -78,15 +78,6 @@ Firefox 会在浏览器重启后移除临时附加组件。普通 Firefox 的永
 
 扩展会从 ChatGPT 页面的计算样式中获取文字和表面颜色，并跟随页面或系统主题变化，不依赖 ChatGPT 的类名。较长的章节导航会自动保持当前条目可见；书签抽屉具备对话框语义和键盘焦点管理；同时支持减少动态效果和强制颜色模式。
 
-## 发布包
-
-生成的扩展包不会提交到 Git。已签名或可提交商店的 ZIP/XPI 文件应通过 GitHub Releases 发布。
-
-- Edge/Chrome：运行 `npm run build:edge`，将 `dist/` 内的内容打包，并确保 `manifest.json` 位于压缩包根目录。
-- Firefox：运行 `npm run build:firefox`，将 `dist-firefox/` 内的内容打包，并确保 `manifest.json` 位于压缩包根目录。
-- Firefox 永久分发需要 Mozilla 签名；开发时可以从 `about:debugging` 临时加载 `dist-firefox/manifest.json`。
-- 商店文案、审核说明、隐私披露和推广素材分别位于 `store-listing/`、`firefox-listing/` 和 `store-assets/`。
-
 ## 仓库内容
 
 - `src/`：Edge、Chrome 和 Firefox 共用的扩展源码。

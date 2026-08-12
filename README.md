@@ -63,15 +63,6 @@ The Firefox extension is written to `dist-firefox/`.
 
 The extension derives text and surface colors from ChatGPT's computed page styles and follows page or system theme changes without relying on ChatGPT class names. Long Section Rails keep the active item visible, the Drawer exposes dialog semantics and keyboard focus, reduced-motion preferences are respected, and forced-colors mode receives explicit focus and border treatment.
 
-## Release packages
-
-Generated extension packages are intentionally excluded from Git. Publish signed or store-ready ZIP/XPI files through GitHub Releases instead of committing them to the repository.
-
-- For Edge or Chrome, run `npm run build:edge` and package the contents of `dist/` with `manifest.json` at the archive root.
-- For Firefox, run `npm run build:firefox` and package the contents of `dist-firefox/` with `manifest.json` at the archive root.
-- Firefox persistent distribution requires Mozilla signing; `dist-firefox/manifest.json` can also be loaded temporarily from `about:debugging`.
-- Store listing copy, reviewer notes, privacy disclosures, and promotional assets live in `store-listing/`, `firefox-listing/`, and `store-assets/`.
-
 ## Repository contents
 
 - `src/` contains the extension source code shared by Edge, Chrome, and Firefox.
