@@ -4,9 +4,12 @@ export interface ChatGPTAdapter {
   getConversationKey(): string;
   getConversationContainer(): HTMLElement | null;
   getAssistantMessages(): HTMLElement[];
+  getMessageById(messageId: string): HTMLElement | null;
+  getMessageByTurnIndex(turnIndex: number): HTMLElement | null;
   getMessageId(message: HTMLElement): string | null;
   getMessageContent(message: HTMLElement): HTMLElement | null;
   getHeadings(message: HTMLElement): HTMLHeadingElement[];
+  getTurnIndex(message: HTMLElement): number | null;
 }
 
 const SELECTORS = {
@@ -32,6 +35,7 @@ const SELECTORS = {
 
 const MESSAGE_ID_ATTRIBUTES = ["data-message-id", "data-turn-id"] as const;
 const CONVERSATION_SEGMENTS = new Set(["c", "share"]);
+const TURN_TEST_ID_PATTERN = /^conversation-turn-(\d+)$/;
 
 function normalizePathname(pathname: string): string {
   const normalized = pathname
@@ -84,6 +88,10 @@ function uniqueElements(elements: HTMLElement[]): HTMLElement[] {
   return [...new Set(elements)];
 }
 
+function queryAttributeValue(attribute: string, value: string): HTMLElement | null {
+  return document.querySelector<HTMLElement>(`[${attribute}="${CSS.escape(value)}"]`);
+}
+
 export const chatgptAdapter: ChatGPTAdapter = {
   getConversationKey() {
     const segments = window.location.pathname.split("/").filter(Boolean);
@@ -127,6 +135,43 @@ export const chatgptAdapter: ChatGPTAdapter = {
     ).filter((element) => !isExtensionElement(element));
 
     return uniqueElements(authorElements.map(getMessageRoot));
+  },
+
+  getMessageById(messageId) {
+    for (const attribute of MESSAGE_ID_ATTRIBUTES) {
+      const candidate = queryAttributeValue(attribute, messageId);
+
+      if (candidate) {
+        return getMessageRoot(candidate);
+      }
+    }
+
+    if (messageId.startsWith("turn:")) {
+      const turnId = messageId.slice("turn:".length);
+      const candidate = queryAttributeValue("data-testid", `conversation-turn-${turnId}`);
+
+      if (candidate) {
+        return candidate;
+      }
+    }
+
+    const candidates = document.querySelectorAll<HTMLElement>(
+      '[data-message-id], [data-turn-id], [data-testid^="conversation-turn-"]',
+    );
+
+    for (const candidate of candidates) {
+      const root = getMessageRoot(candidate);
+
+      if (this.getMessageId(root) === messageId) {
+        return root;
+      }
+    }
+
+    return null;
+  },
+
+  getMessageByTurnIndex(turnIndex) {
+    return queryAttributeValue("data-testid", `conversation-turn-${turnIndex}`);
   },
 
   getMessageId(message) {
@@ -179,5 +224,23 @@ export const chatgptAdapter: ChatGPTAdapter = {
     return Array.from(content.querySelectorAll<HTMLHeadingElement>(SELECTORS.headings)).filter(
       (heading) => !isExtensionElement(heading),
     );
+  },
+
+  getTurnIndex(message) {
+    const candidates = [
+      message,
+      message.closest<HTMLElement>('[data-testid^="conversation-turn-"]'),
+    ].filter((element): element is HTMLElement => Boolean(element));
+
+    for (const candidate of candidates) {
+      const match = candidate.getAttribute("data-testid")?.match(TURN_TEST_ID_PATTERN);
+      const value = match?.[1] ? Number(match[1]) : Number.NaN;
+
+      if (Number.isInteger(value) && value >= 0) {
+        return value;
+      }
+    }
+
+    return null;
   },
 };

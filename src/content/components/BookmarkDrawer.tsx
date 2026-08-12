@@ -6,6 +6,7 @@ interface BookmarkDrawerProps {
   onClose(): void;
   onDelete(bookmark: Bookmark): void;
   onSelect(bookmark: Bookmark): void;
+  resolvingBookmarkIds: ReadonlySet<string>;
   unresolvedBookmarkIds: ReadonlySet<string>;
 }
 
@@ -15,6 +16,7 @@ export function BookmarkDrawer({
   onClose,
   onDelete,
   onSelect,
+  resolvingBookmarkIds,
   unresolvedBookmarkIds,
 }: BookmarkDrawerProps) {
   return (
@@ -48,6 +50,7 @@ export function BookmarkDrawer({
       ) : (
         <ul className="bookmark-list">
           {bookmarks.map((bookmark) => {
+            const resolving = resolvingBookmarkIds.has(bookmark.id);
             const unresolved = unresolvedBookmarkIds.has(bookmark.id);
 
             return (
@@ -64,7 +67,9 @@ export function BookmarkDrawer({
                   <span className="bookmark-copy">
                     <span className="bookmark-title">{bookmark.sectionText}</span>
                     <span className={`bookmark-meta${unresolved ? " is-unresolved" : ""}`}>
-                      {unresolved
+                      {resolving
+                        ? "正在定位…"
+                        : unresolved
                         ? "目标暂不可用"
                         : `H${bookmark.sectionLevel} · Section ${bookmark.sectionIndex + 1}`}
                     </span>

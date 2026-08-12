@@ -4,7 +4,8 @@ import { createRoot } from "react-dom/client";
 import type { Bookmark, Section } from "../shared/types";
 import { App } from "./App";
 import { AnswerTracker, type ActiveAnswer } from "./answerTracker";
-import { resolveBookmark } from "./bookmarkResolver";
+import { recoverBookmarkTarget } from "./bookmarkRecovery";
+import { bookmarkMatchesSection, resolveBookmark } from "./bookmarkResolver";
 import { bookmarkService } from "./bookmarkService";
 import { chatgptAdapter } from "./chatgptAdapter";
 import { ConversationRouteWatcher } from "./conversationRouteWatcher";
@@ -47,15 +48,19 @@ if (reactMount.dataset.mounted !== "true") {
   reactMount.dataset.mounted = "true";
   const reactRoot = createRoot(reactMount);
   const themeManager = new ThemeManager(shadowRoot.host as HTMLElement);
+  const bookmarkTargetCache = new Map<string, Section>();
+  const bookmarkUpgradeIds = new Set<string>();
   const refreshTimerIds = new Set<number>();
   let activeAnswer: ActiveAnswer | null = null;
   let activeSectionId: string | null = null;
   let bookmarks: Bookmark[] = [];
+  let bookmarkNavigationVersion = 0;
   let conversationKey = chatgptAdapter.getConversationKey();
   let conversationVersion = 0;
   let destroyed = false;
   let drawerOpen = false;
   let railPosition: RailPosition = HIDDEN_RAIL_POSITION;
+  let resolvingBookmarkIds = new Set<string>();
   let sections: Section[] = [];
   let unresolvedBookmarkIds = new Set<string>();
   let answerTracker: AnswerTracker;
@@ -89,25 +94,7 @@ if (reactMount.dataset.mounted !== "true") {
               .catch(handleBookmarkError);
           }}
           onBookmarkSelect={(bookmark) => {
-            if (!ensureCurrentConversation()) {
-              return;
-            }
-
-            const targetSection = resolveBookmark(bookmark, chatgptAdapter);
-
-            if (!targetSection) {
-              unresolvedBookmarkIds = new Set(unresolvedBookmarkIds).add(bookmark.id);
-              render();
-              return;
-            }
-
-            unresolvedBookmarkIds = new Set(
-              [...unresolvedBookmarkIds].filter((bookmarkId) => bookmarkId !== bookmark.id),
-            );
-            drawerOpen = false;
-            activeSectionId = targetSection.id;
-            render();
-            navigateToSection(targetSection);
+            void navigateToBookmark(bookmark);
           }}
           onDrawerClose={() => {
             drawerOpen = false;
@@ -142,11 +129,26 @@ if (reactMount.dataset.mounted !== "true") {
             void bookmarkService
               .toggle(operationKey, section)
               .then((nextBookmarks) => {
+                const savedBookmark = nextBookmarks.find(
+                  (bookmark) => bookmark.sectionKey === section.key,
+                );
+
+                if (savedBookmark) {
+                  bookmarkTargetCache.set(savedBookmark.id, section);
+                } else {
+                  for (const [bookmarkId, target] of bookmarkTargetCache) {
+                    if (target.key === section.key) {
+                      bookmarkTargetCache.delete(bookmarkId);
+                    }
+                  }
+                }
+
                 updateBookmarksForContext(nextBookmarks, operationKey, operationVersion);
               })
               .catch(handleBookmarkError);
           }}
           position={railPosition}
+          resolvingBookmarkIds={resolvingBookmarkIds}
           sections={sections}
           unresolvedBookmarkIds={unresolvedBookmarkIds}
         />
@@ -160,12 +162,144 @@ if (reactMount.dataset.mounted !== "true") {
     }
 
     bookmarks = nextBookmarks;
+    const bookmarkIds = new Set(bookmarks.map((bookmark) => bookmark.id));
+
+    for (const bookmarkId of bookmarkTargetCache.keys()) {
+      if (!bookmarkIds.has(bookmarkId)) {
+        bookmarkTargetCache.delete(bookmarkId);
+      }
+    }
+
+    resolvingBookmarkIds = new Set(
+      [...resolvingBookmarkIds].filter((bookmarkId) => bookmarkIds.has(bookmarkId)),
+    );
     unresolvedBookmarkIds = new Set(
       [...unresolvedBookmarkIds].filter((bookmarkId) =>
         bookmarks.some((bookmark) => bookmark.id === bookmarkId),
       ),
     );
+    cacheBookmarkTargets(sections);
+    cacheResolvedBookmarkTargets();
     render();
+  };
+
+  const cacheBookmarkTargets = (nextSections: Section[]) => {
+    for (const bookmark of bookmarks) {
+      const section = nextSections.find((candidate) =>
+        bookmarkMatchesSection(bookmark, candidate),
+      );
+
+      if (!section) {
+        continue;
+      }
+
+      bookmarkTargetCache.set(bookmark.id, section);
+      scheduleBookmarkUpgrade(bookmark, section);
+    }
+  };
+
+  const getCachedBookmarkTarget = (bookmark: Bookmark): Section | null => {
+    const target = bookmarkTargetCache.get(bookmark.id);
+
+    if (!target) {
+      return null;
+    }
+
+    if (!target.element.isConnected) {
+      bookmarkTargetCache.delete(bookmark.id);
+      return null;
+    }
+
+    return target;
+  };
+
+  const cacheResolvedBookmarkTargets = () => {
+    for (const bookmark of bookmarks) {
+      if (getCachedBookmarkTarget(bookmark)) {
+        continue;
+      }
+
+      const target = resolveBookmark(bookmark, chatgptAdapter);
+
+      if (target) {
+        bookmarkTargetCache.set(bookmark.id, target);
+        scheduleBookmarkUpgrade(bookmark, target);
+      }
+    }
+  };
+
+  const scheduleBookmarkUpgrade = (bookmark: Bookmark, section: Section) => {
+    if (bookmark.locatorVersion === 2 || bookmarkUpgradeIds.has(bookmark.id)) {
+      return;
+    }
+
+    const operationKey = conversationKey;
+    const operationVersion = conversationVersion;
+    bookmarkUpgradeIds.add(bookmark.id);
+    void bookmarkService
+      .updateLocator(operationKey, bookmark.id, section)
+      .then((nextBookmarks) => {
+        updateBookmarksForContext(nextBookmarks, operationKey, operationVersion);
+      })
+      .catch(handleBookmarkError)
+      .finally(() => {
+        bookmarkUpgradeIds.delete(bookmark.id);
+      });
+  };
+
+  const navigateToBookmark = async (bookmark: Bookmark) => {
+    if (!ensureCurrentConversation()) {
+      return;
+    }
+
+    const operationKey = conversationKey;
+    const operationVersion = conversationVersion;
+    const navigationVersion = ++bookmarkNavigationVersion;
+    resolvingBookmarkIds = new Set([bookmark.id]);
+    unresolvedBookmarkIds = new Set(
+      [...unresolvedBookmarkIds].filter((bookmarkId) => bookmarkId !== bookmark.id),
+    );
+    render();
+
+    const isNavigationCanceled = () =>
+      destroyed ||
+      operationKey !== conversationKey ||
+      operationVersion !== conversationVersion ||
+      navigationVersion !== bookmarkNavigationVersion;
+    const targetSection =
+      getCachedBookmarkTarget(bookmark) ??
+      (await recoverBookmarkTarget(bookmark, chatgptAdapter, {
+        isCanceled: isNavigationCanceled,
+      }));
+
+    if (isNavigationCanceled()) {
+      return;
+    }
+
+    resolvingBookmarkIds = new Set(
+      [...resolvingBookmarkIds].filter((bookmarkId) => bookmarkId !== bookmark.id),
+    );
+
+    if (!targetSection) {
+      unresolvedBookmarkIds = new Set(unresolvedBookmarkIds).add(bookmark.id);
+      render();
+      return;
+    }
+
+    bookmarkTargetCache.set(bookmark.id, targetSection);
+    unresolvedBookmarkIds = new Set(
+      [...unresolvedBookmarkIds].filter((bookmarkId) => bookmarkId !== bookmark.id),
+    );
+    drawerOpen = false;
+    activeSectionId = targetSection.id;
+    render();
+    navigateToSection(targetSection);
+    void bookmarkService
+      .updateLocator(operationKey, bookmark.id, targetSection)
+      .then((nextBookmarks) => {
+        updateBookmarksForContext(nextBookmarks, operationKey, operationVersion);
+      })
+      .catch(handleBookmarkError);
   };
 
   const handleBookmarkError = (error: unknown) => {
@@ -213,13 +347,18 @@ if (reactMount.dataset.mounted !== "true") {
       return;
     }
 
-    const nextSections = parseSections(activeAnswer.element, chatgptAdapter);
+    const nextSections = parseSections(
+      activeAnswer.element,
+      chatgptAdapter,
+      activeAnswer.index,
+    );
 
     if (sectionsEqual(sections, nextSections)) {
       return;
     }
 
     sections = nextSections;
+    cacheBookmarkTargets(sections);
     positionManager.setTarget(
       chatgptAdapter.getMessageContent(activeAnswer.element) ?? activeAnswer.element,
     );
@@ -257,7 +396,10 @@ if (reactMount.dataset.mounted !== "true") {
     onActiveAnswerChange(nextActiveAnswer) {
       activeAnswer = nextActiveAnswer;
       conversationWatcher.setActiveAnswer(activeAnswer?.element ?? null);
-      sections = activeAnswer ? parseSections(activeAnswer.element, chatgptAdapter) : [];
+      sections = activeAnswer
+        ? parseSections(activeAnswer.element, chatgptAdapter, activeAnswer.index)
+        : [];
+      cacheBookmarkTargets(sections);
       positionManager.setTarget(
         activeAnswer
           ? (chatgptAdapter.getMessageContent(activeAnswer.element) ?? activeAnswer.element)
@@ -311,8 +453,12 @@ if (reactMount.dataset.mounted !== "true") {
     activeAnswer = null;
     activeSectionId = null;
     bookmarks = [];
+    bookmarkNavigationVersion += 1;
+    bookmarkTargetCache.clear();
+    bookmarkUpgradeIds.clear();
     drawerOpen = false;
     railPosition = HIDDEN_RAIL_POSITION;
+    resolvingBookmarkIds = new Set();
     sections = [];
     unresolvedBookmarkIds = new Set();
     conversationWatcher.setActiveAnswer(null);

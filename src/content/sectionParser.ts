@@ -14,6 +14,7 @@ function getHeadingLevel(heading: HTMLHeadingElement): SectionLevel | null {
 interface AnswerIdentity {
   fingerprint: string;
   key: string;
+  messageId: string | null;
 }
 
 function getAnswerIdentity(message: HTMLElement, adapter: ChatGPTAdapter): AnswerIdentity {
@@ -29,16 +30,45 @@ function getAnswerIdentity(message: HTMLElement, adapter: ChatGPTAdapter): Answe
     return {
       fingerprint,
       key: `message:${messageId}`,
+      messageId,
     };
   }
 
   return {
     fingerprint,
     key: `fingerprint:${fingerprint}`,
+    messageId: null,
   };
 }
 
-export function parseSections(message: HTMLElement, adapter: ChatGPTAdapter): Section[] {
+function getHeadingPaths(
+  headings: Array<{ level: SectionLevel }>,
+  minimumLevel: number,
+): string[] {
+  const levelCounts = new Map<SectionLevel, number>();
+
+  return headings.map((heading) => {
+    levelCounts.set(heading.level, (levelCounts.get(heading.level) ?? 0) + 1);
+
+    for (let level = heading.level + 1; level <= 3; level += 1) {
+      levelCounts.delete(level as SectionLevel);
+    }
+
+    const pathParts: string[] = [];
+
+    for (let level = minimumLevel; level <= heading.level; level += 1) {
+      pathParts.push(`h${level}:${levelCounts.get(level as SectionLevel) ?? 0}`);
+    }
+
+    return pathParts.join("/");
+  });
+}
+
+export function parseSections(
+  message: HTMLElement,
+  adapter: ChatGPTAdapter,
+  answerIndex = -1,
+): Section[] {
   const parsedHeadings = adapter
     .getHeadings(message)
     .map((element) => ({
@@ -62,26 +92,32 @@ export function parseSections(message: HTMLElement, adapter: ChatGPTAdapter): Se
 
   const minimumLevel = Math.min(...parsedHeadings.map((heading) => heading.level));
   const answerIdentity = getAnswerIdentity(message, adapter);
-  const occurrences = new Map<string, number>();
+  const headingPaths = getHeadingPaths(parsedHeadings, minimumLevel);
+  const headingHashes = parsedHeadings.map((heading) =>
+    hashText(heading.text.toLocaleLowerCase()),
+  );
 
   return parsedHeadings.map((heading, index) => {
     const normalizedHeading = heading.text.toLocaleLowerCase();
-    const occurrenceKey = `${heading.level}:${normalizedHeading}`;
-    const occurrence = occurrences.get(occurrenceKey) ?? 0;
-    const key = `${answerIdentity.key}:${occurrenceKey}:${occurrence}`;
-
-    occurrences.set(occurrenceKey, occurrence + 1);
+    const key = `${answerIdentity.key}:heading:${index}`;
 
     return {
       answerFingerprint: answerIdentity.fingerprint,
+      answerIndex,
       answerKey: answerIdentity.key,
       depth: heading.level - minimumLevel,
       element: heading.element,
+      headingPath: headingPaths[index] ?? `heading:${index}`,
       id: `section-${hashText(key)}`,
       index,
       key,
       level: heading.level,
+      messageId: answerIdentity.messageId,
+      nextHeadingHash: headingHashes[index + 1] ?? null,
+      previousHeadingHash: headingHashes[index - 1] ?? null,
       text: heading.text,
+      textHash: headingHashes[index] ?? hashText(normalizedHeading),
+      turnIndex: adapter.getTurnIndex(message),
     };
   });
 }

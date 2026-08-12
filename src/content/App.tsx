@@ -1,4 +1,5 @@
 import type { Bookmark, Section } from "../shared/types";
+import { bookmarkMatchesSection } from "./bookmarkResolver";
 import { BookmarkDrawer } from "./components/BookmarkDrawer";
 import { SectionRail } from "./components/SectionRail";
 import type { RailPosition } from "./positionManager";
@@ -15,6 +16,7 @@ interface AppProps {
   onSectionSelect(section: Section): void;
   onToggleBookmark(section: Section): void;
   position: RailPosition;
+  resolvingBookmarkIds: ReadonlySet<string>;
   sections: Section[];
   unresolvedBookmarkIds: ReadonlySet<string>;
 }
@@ -30,10 +32,17 @@ export function App({
   onSectionSelect,
   onToggleBookmark,
   position,
+  resolvingBookmarkIds,
   sections,
   unresolvedBookmarkIds,
 }: AppProps) {
-  const bookmarkedSectionKeys = new Set(bookmarks.map((bookmark) => bookmark.sectionKey));
+  const bookmarkedSectionKeys = new Set(
+    sections
+      .filter((section) =>
+        bookmarks.some((bookmark) => bookmarkMatchesSection(bookmark, section)),
+      )
+      .map((section) => section.key),
+  );
   const drawerLeft = Math.max(12, position.left - 312);
 
   return (
@@ -57,6 +66,7 @@ export function App({
           onClose={onDrawerClose}
           onDelete={onBookmarkDelete}
           onSelect={onBookmarkSelect}
+          resolvingBookmarkIds={resolvingBookmarkIds}
           unresolvedBookmarkIds={unresolvedBookmarkIds}
         />
       ) : null}
